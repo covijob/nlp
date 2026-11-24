@@ -44,7 +44,15 @@ Stenogramas atsisiųsk rankiniu būdu iš Seimo svetainės: https://www.lrs.lt/s
 
 Reikalingi tik du leidiniai: **Nr. 7** ir **Nr. 8**. Kitų nenaudojame. Atsisiųstus PDF padėk į `data/` aplanką.
 
-`fragmentai.jsonl` ir `vektoriai.npy` sugeneruojami iš PDF paleidus kodą arba juos duos Mangirdas, kai bus paruošti.
+### Sugeneruoti failai (`fragmentai.jsonl`, `vektoriai.npy`)
+
+Jie sugeneruojami iš PDF paleidus kodą, todėl **kiekvienas gali juos pasidaryti pats**. Bet vektorių skaičiavimas užtrunka (ypač be GPU), todėl dalinamės taip:
+
+1. Vieną kartą juos sugeneruoja vienas žmogus (kurio kompiuteryje greičiausia). Kadangi generavimas dar nepradėtas, vektorius galima suskaičiuoti ir debesyje (pvz. Google Colab su nemokamu GPU), o gautus failus parsisiųsti ir išdalinti kitiems.
+2. Jis supakuoja `fragmentai.jsonl` ir `vektoriai.npy` į vieną `.zip` ir atsiunčia grupėje (Teams / Messenger).
+3. Visi kiti išpakuoja į `data/`.
+
+Svarbu: `vektoriai.npy` eilučių tvarka turi sutapti su `fragmentai.jsonl`. Jei kas nors pakeičia fragmentavimą (`parse.py`), vektorius reikia perskaičiuoti ir pranešti kitiems, kad atsisiųstų naujus.
 
 ## Aplankai
 
