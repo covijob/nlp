@@ -1,0 +1,9 @@
+pdfplumber
+pandas
+numpy
+spacy
+torch
+FlagEmbedding
+django
+matplotlib
+huggingface_hub
