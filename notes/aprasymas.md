@@ -124,8 +124,8 @@ Kiekvienas dirba savo failuose. Pirmiausia Mangirdas paruošia repozitoriją ir 
 
 **Mangirdas: pagrindas, 1 etapas, svetainė**
 
-- [ ] Repozitorija, `requirements.txt`, duomenų formatas, tuščios funkcijos visiems failams
-- [ ] `fragmentai_sample.jsonl`
+- [x] Repozitorija, `requirements.txt`, duomenų formatas, tuščios funkcijos visiems failams
+- [x] `fragmentai_sample.jsonl`
 - [ ] Visas 1 etapas: `parse.py` ir pilnas `fragmentai.jsonl`
 - [ ] Django svetainė (3 puslapiai) ir visų modulių prijungimas prie jos
 
