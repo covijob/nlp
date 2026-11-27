@@ -16,6 +16,37 @@ def lemos(doc):
 def lematizuoti(tekstas):
     return lemos(nlp(tekstas))
 
+
+# --- Pavardžių žodynas ---
+# Pavardės imamos iš duomenų kalbėtojo sąrašo. Ieškoma pagal šaknį be galūnės, kad tiktų visi linksniai. 
+# Pvz., "Skvernel" tiktų "Skvernelis", "Skvernelio", "Skvernelį" ir pan.
+
+Galunes =("as", "is", "ys", "us", "ė", "a")
+
+def pavardes_saknis(pavarde):
+    p = pavarde.lower()
+    for galune in Galunes:
+        if p.endswith(galune):
+            return p[:-len(galune)]
+    return p
+
+
+def pavardziu_zodynas(fragmentai):
+    zodynas = {}
+    for f in fragmentai:
+        kalbetojas = f.get("kalbetojas")
+        if not kalbetojas:
+            continue
+        pavarde = kalbetojas.split()[-1]
+        for dalis in pavarde.split("-"):
+            saknis = pavardes_saknis(dalis)
+            zodynas.setdefault(saknis, set()).add(kalbetojas)
+    return zodynas
+
+
+Pavardes = pavardziu_zodynas(nuskaityti_fragmentus())
+
+
 def rasti_esybes(tekstas_lema):
     return []
 
@@ -58,6 +89,17 @@ def rasti_menesi(fraze):
                 return menuo
     return None
 
+
+
+def rasti_kalbetoja(fraze):
+    zodziai = re.findall(r"\w+", fraze.lower())
+    rasti = set()
+    for saknis, kalbetojai in Pavardes.items():
+        if any(z.startswith(saknis) for z in zodziai):
+            rasti = rasti | kalbetojai
+    return sorted(rasti)
+
+
 def istraukti_rakta(fraze):
     raktas = {}
 
@@ -68,4 +110,9 @@ def istraukti_rakta(fraze):
     menuo = rasti_menesi(fraze)
     if menuo:
         raktas["menuo"] = menuo
+    
+    kalbetojas = rasti_kalbetoja(fraze)
+    if kalbetojas:
+        raktas["kalbetojas"] = kalbetojas
+    
     return raktas
