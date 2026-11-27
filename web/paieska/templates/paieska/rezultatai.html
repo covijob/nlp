@@ -2,10 +2,15 @@
 {% block turinys %}
 <h1>Tyrimas #{{ tyrimas.id }}</h1>
 <p class="meta">{{ tyrimas.sukurta|date:"Y-m-d H:i" }} · {{ tyrimas.get_metodas_display }} · {{ tyrimas.get_irenginys_display }} · iš viso {{ tyrimas.trukme }} s</p>
-{% for r in tyrimas.rezultatai %}
+{% for r in frazes_rezultatai %}
 <h2>{{ r.fraze }}</h2>
 <p class="meta">Trukmė: {{ r.trukme }} s</p>
 {% if r.pastaba %}<p class="pastaba">{{ r.pastaba }}</p>{% endif %}
+<div class="grafikai">
+    {% if r.grafikai.menesiai %}<img src="data:image/png;base64,{{ r.grafikai.menesiai }}" alt="Paminėjimai per mėnesius: {% for m, n in r.menesiai.items %}{{ m }} – {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% endif %}
+    {% if r.grafikai.frakcijos %}<img src="data:image/png;base64,{{ r.grafikai.frakcijos }}" alt="Paminėjimai pagal frakcijas: {% for f, n in r.frakcijos.items %}{{ f }} – {{ n }}{% if not forloop.last %}, {% endif %}{% endfor %}">{% endif %}
+</div>
+<p class="meta">Grafikai skaičiuojami iš 50 panašiausių fragmentų, žemiau rodomi 5 geriausi.</p>
 {% for f in r.fragmentai %}
 <div class="fragmentas">
     <div class="meta">#{{ forloop.counter }} · {{ f.kalbetojas }}{% if f.frakcija %} ({{ f.frakcija }}){% endif %} · {{ f.data }}{% if f.balas is not None %} · balas {{ f.balas|floatformat:3 }}{% endif %}</div>

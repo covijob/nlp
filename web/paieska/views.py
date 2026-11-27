@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from duomenys import EVAL, nuskaityti_jsonl
 
-from . import paslauga
+from . import grafikai, paslauga
 from .models import METODAI, Fraze, Tyrimas
 
 FRAZES_FAILAS = EVAL / "frazes.jsonl"
@@ -59,4 +59,6 @@ def rezultatai_sarasas(request):
 
 
 def rezultatai(request, tyrimo_id):
-    return render(request, "paieska/rezultatai.html", {"tyrimas": get_object_or_404(Tyrimas, id=tyrimo_id)})
+    tyrimas = get_object_or_404(Tyrimas, id=tyrimo_id)
+    frazes_rezultatai = [{**r, "grafikai": grafikai.grafikai(r)} for r in tyrimas.rezultatai]
+    return render(request, "paieska/rezultatai.html", {"tyrimas": tyrimas, "frazes_rezultatai": frazes_rezultatai})

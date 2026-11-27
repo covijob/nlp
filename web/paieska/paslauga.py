@@ -1,5 +1,6 @@
 import random
 import time
+from collections import Counter
 
 import numpy as np
 
@@ -7,6 +8,7 @@ import search
 from duomenys import FRAGMENTAI, FRAGMENTAI_SAMPLE, VEKTORIAI, VEKTORIAI_SAMPLE, nuskaityti_fragmentus
 
 K = 5
+GRAFIKO_K = 50
 ISTRAUKOS_ILGIS = 400
 
 _fragmentai = None
@@ -25,12 +27,13 @@ def gpu_yra():
 def duomenys():
     global _fragmentai, _vektoriai
     if _fragmentai is None:
-        if FRAGMENTAI.exists():
-            _fragmentai = nuskaityti_fragmentus(FRAGMENTAI)
-            vektoriu_kelias = VEKTORIAI
+        if FRAGMENTAI.exists() and VEKTORIAI.exists():
+            fragmentu_kelias, vektoriu_kelias = FRAGMENTAI, VEKTORIAI
+        elif VEKTORIAI_SAMPLE.exists() or not FRAGMENTAI.exists():
+            fragmentu_kelias, vektoriu_kelias = FRAGMENTAI_SAMPLE, VEKTORIAI_SAMPLE
         else:
-            _fragmentai = nuskaityti_fragmentus(FRAGMENTAI_SAMPLE)
-            vektoriu_kelias = VEKTORIAI_SAMPLE
+            fragmentu_kelias, vektoriu_kelias = FRAGMENTAI, VEKTORIAI
+        _fragmentai = nuskaityti_fragmentus(fragmentu_kelias)
         if vektoriu_kelias.exists():
             _vektoriai = np.load(vektoriu_kelias)
     return _fragmentai, _vektoriai
@@ -52,11 +55,11 @@ def ieskoti_frazes(fraze, metodas, irenginys):
         m = modelis(irenginys) if vektoriai is not None else None
         if vektoriai is None or m is None:
             pastaba = "Nėra vektorių arba modelio, rodomi atsitiktiniai fragmentai."
-            rasti = random.sample(fragmentai, min(K, len(fragmentai)))
+            rasti = random.sample(fragmentai, min(GRAFIKO_K, len(fragmentai)))
         else:
-            rasti = search.ieskoti(fraze, metodas, K, fragmentai, vektoriai, m)
+            rasti = search.ieskoti(fraze, metodas, GRAFIKO_K, fragmentai, vektoriai, m)
     else:
-        rasti = search.ieskoti(fraze, metodas, K, fragmentai)
+        rasti = search.ieskoti(fraze, metodas, GRAFIKO_K, fragmentai)
     return rasti, pastaba
 
 
@@ -71,6 +74,8 @@ def vykdyti(frazes, metodas, irenginys):
                 "fraze": fraze,
                 "trukme": round(time.perf_counter() - frazes_pradzia, 3),
                 "pastaba": pastaba,
+                "menesiai": dict(Counter(f["data"][:7] for f in rasti if f["data"])),
+                "frakcijos": dict(Counter(f["frakcija"] or "Be frakcijos" for f in rasti)),
                 "fragmentai": [
                     {
                         "id": f["id"],
@@ -80,7 +85,7 @@ def vykdyti(frazes, metodas, irenginys):
                         "istrauka": f["tekstas"][:ISTRAUKOS_ILGIS],
                         "balas": f.get("balas"),
                     }
-                    for f in rasti
+                    for f in rasti[:K]
                 ],
             }
         )
