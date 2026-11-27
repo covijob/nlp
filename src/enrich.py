@@ -1,3 +1,4 @@
+import random
 import re
 import spacy
 from duomenys import nuskaityti_fragmentus
@@ -46,14 +47,75 @@ def pavardziu_zodynas(fragmentai):
 
 PAVARDES = pavardziu_zodynas(nuskaityti_fragmentus())
 
+NE_PAVARDES = {"kairė", "kairės", "kairę", "kairėje", "kairei",
+    "kairieji", "kairiųjų", "kairiesiems", "kairiuosius",}
+
+INSTITUCIJOS = {
+    "Seimas": ("seim",),
+    "Vyriausybė": ("vyriausyb",),
+    "Prezidentas": ("prezident",),
+    "Ministras Pirmininkas": ("ministr pirminink", "premjer"),
+    "NATO": ("nato",),
+    "ES": ("europ sąjung", "es="),
+    "Europos Komisija": ("europ komisij",),
+    "Europos Parlamentas": ("europ parlament",),
+    "Rusija": ("rusij",),
+    "Ukraina": ("ukrain",),
+    "Baltarusija": ("baltarusij",),
+    "JAV": ("jav=", "jungtin valstij"),
+    "Kinija": ("kinij",),
+    "Konstitucinis Teismas": ("konstitucin teism",),
+    "Lietuvos bankas": ("lietuv bank",),
+    "Valstybės kontrolė": ("valstyb kontrol",),
+    "Savivaldybės": ("savivaldyb",),
+    "Prokuratūra": ("prokurat",),
+    "STT": ("stt=", "specialiųj tyrim tarnyb"),
+    "VSD": ("vsd=", "valstyb saugum departament"),
+    "Sodra": ("sodr",),
+    "VMI": ("vmi=", "mokest inspekcij"),
+    "Kariuomenė": ("kariuomen",),
+    "Policija": ("policij",),
+    "Finansų ministerija": ("finans minist",),
+    "Sveikatos apsaugos ministerija": ("sveikat apsaug minist",),
+    "Švietimo, mokslo ir sporto ministerija": ("švietim moksl sport minist",),
+    "Krašto apsaugos ministerija": ("krašt apsaug minist",),
+    "Užsienio reikalų ministerija": ("užsieni reikal minist",),
+    "Vidaus reikalų ministerija": ("vidaus reikal minist",),
+    "Socialinės apsaugos ir darbo ministerija": ("socialin apsaug darb minist",),
+    "Teisingumo ministerija": ("teisingum minist",),
+    "Energetikos ministerija": ("energetik minist",),
+    "Ekonomikos ir inovacijų ministerija": ("ekonomik inovacij minist",),
+    "Susisiekimo ministerija": ("susisiekim minist",),
+    "Žemės ūkio ministerija": ("žem ūk minist",),
+    "Aplinkos ministerija": ("aplink minist",),
+    "Kultūros ministerija": ("kultūr minist",),
+}
 
 def rasti_esybes(tekstas_lema):
-    return []
+    rasta = set()
+    for pavadinimas, formos in INSTITUCIJOS.items():
+        for forma in formos:
+            dalys = []
+            for zodis in forma.split():
+                if zodis.endswith("="):
+                    dalys.append(re.escape(zodis[:-1]) + r"\b")
+                else:
+                    dalys.append(re.escape(zodis) + r"\w*")
+            if re.search(r"\b" + r"\s+".join(dalys), tekstas_lema):
+                rasta.add(pavadinimas)
+    rasta = rasta | set(rasti_kalbetoja(tekstas_lema))
+    return sorted(rasta)
 
 def praturtinti(fragmentai):
-    for fragmentas in fragmentai:
-        fragmentas["tekstas_lema"] = lematizuoti(fragmentas["tekstas"])
-        fragmentas["esybes"] = rasti_esybes(fragmentas["tekstas_lema"])
+    tekstai = []
+    for f in fragmentai:
+        tekstai.append(f["tekstas"])
+
+    dokumentai = list(nlp.pipe(tekstai, batch_size=50))
+
+    for i in range(len(fragmentai)):
+        fragmentai[i]["tekstas_lema"] = lemos(dokumentai[i])
+        fragmentai[i]["esybes"] = rasti_esybes(fragmentai[i]["tekstas_lema"])
     return fragmentai
 
 # --- Rakto ištraukimas iš frazės ---
@@ -94,9 +156,16 @@ def rasti_menesi(fraze):
 def rasti_kalbetoja(fraze):
     zodziai = re.findall(r"\w+", fraze.lower())
     rasti = set()
-    for saknis, kalbetojai in PAVARDES.items():
-        if any(z.startswith(saknis) for z in zodziai):
-            rasti = rasti | kalbetojai
+    for z in zodziai:
+        if z in NE_PAVARDES:
+            continue
+        geriausia = None
+        for saknis in PAVARDES:
+            if z.startswith(saknis):
+                if geriausia is None or len(saknis) > len(geriausia):
+                    geriausia = saknis
+        if geriausia:
+            rasti = rasti | PAVARDES[geriausia]
     return sorted(rasti)
 
 
@@ -144,4 +213,5 @@ def istraukti_rakta(fraze):
     frakcija = rasti_frakcija(fraze)
     if frakcija:
         raktas["frakcija"] = frakcija
+    
     return raktas
