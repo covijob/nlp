@@ -1,5 +1,7 @@
 import argparse
+import math
 import re
+from collections import Counter
 
 import pdfplumber
 
@@ -23,9 +25,16 @@ MENESIAI = {
     "gruodžio": 12,
 }
 
-DATA_RE = re.compile(r"^(\d{4}) m\. (\w+) (\d{1,2}) d\.$")
+DATA_RE = re.compile(r"^(\d{4}) m\. (\w+) (\d{1,2})(?:\s*–\s*\d{1,2})? d\.$")
 POSEDIS_RE = re.compile(r"(\w+) POSĖDŽIO NR\. (\d+)")
 ETIKETE_RE = re.compile(r"^(?P<vardas>[^()]+?)\s*(?:\((?P<skliaustai>[^()]*)\))?\s*\.?$")
+SAKINIO_RIBA = re.compile(r"(?<=[.!?…])\s+")
+POSEDZIU_TIPAI = {
+    "RYTINIO": "rytinis",
+    "VAKARINIO": "vakarinis",
+    "NENUMATYTO": "nenumatytas",
+    "NEEILINIO": "neeilinis",
+}
 PIRMININKAI = {"PIRMININKAS", "PIRMININKĖ"}
 SKYRYBA = set(" .,()–-\xa0")
 
@@ -95,6 +104,10 @@ def atskirti_etikete(simboliai):
             riba = i + 1
         elif c["text"] not in SKYRYBA:
             break
+    while riba < len(simboliai) and simboliai[riba]["text"].isspace():
+        riba += 1
+    if riba < len(simboliai) and simboliai[riba]["text"] == "(" and riba + 1 < len(simboliai) and yra_italic(simboliai[riba + 1]):
+        riba += 1
     if neuzbaigta(surinkti(simboliai[:riba])):
         uzdarymas = next((i for i in range(riba, len(simboliai)) if simboliai[i]["text"] == ")"), None)
         if uzdarymas is not None:
@@ -121,7 +134,10 @@ def istraukti_teksta(pdf_kelias):
                     eilutes.append({"tipas": tipas, "tekstas": surinkti(simboliai)})
                     continue
                 etikete, likusi = atskirti_etikete(simboliai)
-                eilutes.append({"tipas": "tekstas", "etikete": etikete, "tekstas": surinkti(be_pastabu(likusi))})
+                tekstas = surinkti(be_pastabu(likusi))
+                if etikete:
+                    tekstas = tekstas.lstrip(".,: ")
+                eilutes.append({"tipas": "tekstas", "etikete": etikete, "tekstas": tekstas})
     return eilutes
 
 
@@ -154,7 +170,7 @@ def gauti_data(eilute):
 def gauti_posedi(eilute):
     m = POSEDIS_RE.search(eilute)
     if m:
-        return f"{m.group(1).lower()[:-2]}is Nr. {m.group(2)}"
+        return f"{POSEDZIU_TIPAI.get(m.group(1), m.group(1).lower())} Nr. {m.group(2)}"
     if "MINĖJIM" in eilute:
         return "iškilmingas minėjimas"
     return None
@@ -240,18 +256,54 @@ def skaidyti(eilutes):
     return fragmentai
 
 
+def sakiniai(tekstas):
+    return [s for s in SAKINIO_RIBA.split(tekstas) if s]
+
+
+def dalys_po_zodziu(zodziai, max_zodziu):
+    return [" ".join(zodziai[i : i + max_zodziu]) for i in range(0, len(zodziai), max_zodziu)]
+
+
 def perkirpti(fragmentas, max_zodziu=MAX_ZODZIU):
-    raise NotImplementedError
+    viso = len(fragmentas["tekstas"].split())
+    if viso <= max_zodziu:
+        return [fragmentas]
+    tikslas = viso / math.ceil(viso / max_zodziu)
+    dalys = []
+    dabartine = []
+    ilgis = 0
+    for sakinys in sakiniai(fragmentas["tekstas"]):
+        zodziai = sakinys.split()
+        if dabartine and (ilgis + len(zodziai) > max_zodziu or ilgis >= tikslas):
+            dalys.append(" ".join(dabartine))
+            dabartine, ilgis = [], 0
+        if len(zodziai) > max_zodziu:
+            dalys.extend(dalys_po_zodziu(zodziai, max_zodziu))
+            continue
+        dabartine.append(sakinys)
+        ilgis += len(zodziai)
+    if dabartine:
+        dalys.append(" ".join(dabartine))
+    return [{**fragmentas, "tekstas": dalis, "tekstas_lema": dalis.lower()} for dalis in dalys]
 
 
 def uzpildyti_frakcijas(fragmentai):
-    raise NotImplementedError
+    zinomos = {}
+    for f in fragmentai:
+        if f["frakcija"]:
+            zinomos.setdefault(f["kalbetojas"], Counter())[f["frakcija"]] += 1
+    for f in fragmentai:
+        if not f["frakcija"] and f["kalbetojas"] in zinomos:
+            f["frakcija"] = zinomos[f["kalbetojas"]].most_common(1)[0][0]
+    return fragmentai
 
 
 def apdoroti(pdf_keliai):
     fragmentai = []
     for kelias in pdf_keliai:
-        fragmentai.extend(skaidyti(istraukti_teksta(kelias)))
+        for fragmentas in skaidyti(istraukti_teksta(kelias)):
+            fragmentai.extend(perkirpti(fragmentas))
+    uzpildyti_frakcijas(fragmentai)
     for i, fragmentas in enumerate(fragmentai):
         fragmentas["id"] = i
     return fragmentai
