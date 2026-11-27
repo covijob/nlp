@@ -1,0 +1,25 @@
+{% extends "paieska/base.html" %}
+{% block turinys %}
+<h1>Tyrimas</h1>
+{% if klaida %}<p class="klaida">{{ klaida }}</p>{% endif %}
+{% if frazes %}
+<form method="post">
+    {% csrf_token %}
+    <h3>Frazės</h3>
+    {% for fraze in frazes %}
+    <label><input type="checkbox" name="frazes" value="{{ fraze.id }}"> {{ fraze.tekstas }}</label><br>
+    {% endfor %}
+    <h3>Metodas</h3>
+    {% for reiksme, pavadinimas in metodai %}
+    <label><input type="radio" name="metodas" value="{{ reiksme }}" {% if forloop.first %}checked{% endif %}> {{ pavadinimas }}</label><br>
+    {% endfor %}
+    <h3>Įrenginys</h3>
+    {% for reiksme, pavadinimas in irenginiai %}
+    <label><input type="radio" name="irenginys" value="{{ reiksme }}" {% if forloop.first %}checked{% endif %}> {{ pavadinimas }}</label><br>
+    {% endfor %}
+    <p><button type="submit">Paleisti</button></p>
+</form>
+{% else %}
+<p>Frazių nėra. <a href="{% url 'frazes' %}">Pridėk frazę</a>.</p>
+{% endif %}
+{% endblock %}

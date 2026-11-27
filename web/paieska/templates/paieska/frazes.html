@@ -1,0 +1,17 @@
+{% extends "paieska/base.html" %}
+{% block turinys %}
+<h1>Frazės</h1>
+<form method="post">
+    {% csrf_token %}
+    <input type="text" name="tekstas" size="60" placeholder="Nauja frazė">
+    <button type="submit">Pridėti</button>
+</form>
+{% if klaida %}<p class="klaida">{{ klaida }}</p>{% endif %}
+<ol>
+    {% for fraze in frazes %}
+    <li>{{ fraze.tekstas }}</li>
+    {% empty %}
+    <p>Frazių dar nėra.</p>
+    {% endfor %}
+</ol>
+{% endblock %}

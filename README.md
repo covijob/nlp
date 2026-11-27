@@ -54,6 +54,16 @@ Jie sugeneruojami iš PDF paleidus kodą, todėl **kiekvienas gali juos pasidary
 
 Svarbu: `vektoriai.npy` eilučių tvarka turi sutapti su `fragmentai.jsonl`. Jei kas nors pakeičia fragmentavimą (`parse.py`), vektorius reikia perskaičiuoti ir pranešti kitiems, kad atsisiųstų naujus.
 
+## 5. Svetainė
+
+```
+cd web
+python manage.py migrate
+python manage.py runserver
+```
+
+Atsidaryk http://127.0.0.1:8000. Paieškai `bge` reikia `data/vektoriai_sample.npy` (arba pilnų `fragmentai.jsonl` ir `vektoriai.npy`) ir įdiegtų `torch` bei `FlagEmbedding`. Jei jų nėra, rodomi atsitiktiniai fragmentai.
+
 ## Aplankai
 
 ```

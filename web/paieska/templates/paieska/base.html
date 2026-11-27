@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="utf-8">
+    <title>Seimo stenogramų paieška</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; line-height: 1.4; }
+        nav a { margin-right: 1rem; }
+        .klaida { color: #b00; }
+        .pastaba { color: #a60; }
+        .fragmentas { border-left: 3px solid #ccc; padding-left: .75rem; margin: .75rem 0; }
+        .meta { color: #555; font-size: .9rem; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{% url 'frazes' %}">Frazės</a>
+        <a href="{% url 'tyrimas' %}">Tyrimas</a>
+        <a href="{% url 'rezultatai_sarasas' %}">Rezultatai</a>
+    </nav>
+    <hr>
+    {% block turinys %}{% endblock %}
+</body>
+</html>

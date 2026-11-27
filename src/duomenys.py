@@ -11,6 +11,7 @@ EVAL = SAKNIS / "eval"
 FRAGMENTAI = DATA / "fragmentai.jsonl"
 FRAGMENTAI_SAMPLE = DATA / "fragmentai_sample.jsonl"
 VEKTORIAI = DATA / "vektoriai.npy"
+VEKTORIAI_SAMPLE = DATA / "vektoriai_sample.npy"
 BGE_M3 = MODELIAI / "bge-m3"
 
 LAUKAI = [

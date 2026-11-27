@@ -1,0 +1,16 @@
+{% extends "paieska/base.html" %}
+{% block turinys %}
+<h1>Tyrimas #{{ tyrimas.id }}</h1>
+<p class="meta">{{ tyrimas.sukurta|date:"Y-m-d H:i" }} · {{ tyrimas.get_metodas_display }} · {{ tyrimas.get_irenginys_display }} · iš viso {{ tyrimas.trukme }} s</p>
+{% for r in tyrimas.rezultatai %}
+<h2>{{ r.fraze }}</h2>
+<p class="meta">Trukmė: {{ r.trukme }} s</p>
+{% if r.pastaba %}<p class="pastaba">{{ r.pastaba }}</p>{% endif %}
+{% for f in r.fragmentai %}
+<div class="fragmentas">
+    <div class="meta">#{{ forloop.counter }} · {{ f.kalbetojas }}{% if f.frakcija %} ({{ f.frakcija }}){% endif %} · {{ f.data }}{% if f.balas is not None %} · balas {{ f.balas|floatformat:3 }}{% endif %}</div>
+    <div>{{ f.istrauka }}{% if f.istrauka|length >= 400 %}…{% endif %}</div>
+</div>
+{% endfor %}
+{% endfor %}
+{% endblock %}

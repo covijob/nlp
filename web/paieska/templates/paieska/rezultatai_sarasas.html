@@ -1,0 +1,11 @@
+{% extends "paieska/base.html" %}
+{% block turinys %}
+<h1>Rezultatai</h1>
+<ul>
+    {% for t in tyrimai %}
+    <li><a href="{% url 'rezultatai' t.id %}">Tyrimas #{{ t.id }}</a> · {{ t.sukurta|date:"Y-m-d H:i" }} · {{ t.get_metodas_display }} · {{ t.get_irenginys_display }} · {{ t.trukme }} s</li>
+    {% empty %}
+    <p>Tyrimų dar nėra.</p>
+    {% endfor %}
+</ul>
+{% endblock %}
