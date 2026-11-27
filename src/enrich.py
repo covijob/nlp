@@ -59,4 +59,13 @@ def rasti_menesi(fraze):
     return None
 
 def istraukti_rakta(fraze):
-    return {}
+    raktas = {}
+
+    metai =re.search(r"\b(20\d{2})\b", fraze)
+    if metai:
+        raktas["metai"] = int(metai.group(1))
+
+    menuo = rasti_menesi(fraze)
+    if menuo:
+        raktas["menuo"] = menuo
+    return raktas
