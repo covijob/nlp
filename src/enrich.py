@@ -21,11 +21,11 @@ def lematizuoti(tekstas):
 # Pavardės imamos iš duomenų kalbėtojo sąrašo. Ieškoma pagal šaknį be galūnės, kad tiktų visi linksniai. 
 # Pvz., "Skvernel" tiktų "Skvernelis", "Skvernelio", "Skvernelį" ir pan.
 
-Galunes =("as", "is", "ys", "us", "ė", "a")
+GALUNES =("as", "is", "ys", "us", "ė", "a")
 
 def pavardes_saknis(pavarde):
     p = pavarde.lower()
-    for galune in Galunes:
+    for galune in GALUNES:
         if p.endswith(galune):
             return p[:-len(galune)]
     return p
@@ -44,7 +44,7 @@ def pavardziu_zodynas(fragmentai):
     return zodynas
 
 
-Pavardes = pavardziu_zodynas(nuskaityti_fragmentus())
+PAVARDES = pavardziu_zodynas(nuskaityti_fragmentus())
 
 
 def rasti_esybes(tekstas_lema):
@@ -94,9 +94,35 @@ def rasti_menesi(fraze):
 def rasti_kalbetoja(fraze):
     zodziai = re.findall(r"\w+", fraze.lower())
     rasti = set()
-    for saknis, kalbetojai in Pavardes.items():
+    for saknis, kalbetojai in PAVARDES.items():
         if any(z.startswith(saknis) for z in zodziai):
             rasti = rasti | kalbetojai
+    return sorted(rasti)
+
+
+
+FRAKCIJU_KAMIENAI = {
+    "LSDPF": ("socialdemokrat", "lsdp"),
+    "TS-LKDF": ("konservator", "ts=", "lkd"),
+    "NAF": ("aušr", "naf="),
+    "LVŽ-KŠSF": ("valstieč", "lvž"),
+    "LSF": ("liberal", "lsf="),
+    "DFVL": ("demokratai=", "demokratų=", "demokratams=", "demokratus=", "vardan", "dfvl="),
+    "MSNG": ("mišr", "msng="),
+}
+
+
+
+def rasti_frakcija(fraze):
+    zodziai = re.findall(r"\w+", fraze.lower())
+    rasti = set()
+    for frakcija, kamienai in FRAKCIJU_KAMIENAI.items():
+        for k in kamienai:
+            if k.endswith("="):
+                if k[:-1] in zodziai:
+                    rasti.add(frakcija)
+            elif any(z.startswith(k) for z in zodziai):
+                rasti.add(frakcija)
     return sorted(rasti)
 
 
@@ -114,5 +140,8 @@ def istraukti_rakta(fraze):
     kalbetojas = rasti_kalbetoja(fraze)
     if kalbetojas:
         raktas["kalbetojas"] = kalbetojas
-    
+
+    frakcija = rasti_frakcija(fraze)
+    if frakcija:
+        raktas["frakcija"] = frakcija
     return raktas
